@@ -14,6 +14,10 @@ function normalizeRepository(value) {
   return match ? `${match[1]}/${match[2]}` : null;
 }
 
+function browserTarget() {
+  return /Edg\//i.test(navigator.userAgent) ? 'edge' : 'chrome';
+}
+
 function setStatus(message, state = 'ok') {
   statusEl.textContent = message;
   statusEl.dataset.state = state;
@@ -69,13 +73,14 @@ async function installTarget() {
 
   install.disabled = true;
   detect.disabled = true;
-  setStatus(`Installing / updating ${repository}…`);
+  const browser = browserTarget();
+  setStatus(`Installing / updating ${repository} on ${browser}…`);
 
   try {
     const response = await chrome.runtime.sendMessage({
       type: 'install_extension',
       repository,
-      browser: 'edge'
+      browser
     });
 
     if (!response?.ok) {
