@@ -1,4 +1,5 @@
 const ACTIONS = new Set(['open_url', 'navigate', 'focus_tab']);
+const NATIVE_HOST = 'com.bonsai.ext_install';
 
 function validHttpUrl(value) {
   try {
@@ -9,11 +10,44 @@ function validHttpUrl(value) {
   }
 }
 
+function validRepository(value) {
+  if (typeof value !== 'string') return null;
+  const match = value.trim().match(/^([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)$/);
+  return match ? `${match[1]}/${match[2]}` : null;
+}
+
+function validBrowser(value) {
+  return ['edge', 'chrome', 'auto'].includes(value) ? value : 'auto';
+}
+
 chrome.runtime.onInstalled.addListener(() => {
   console.log('[Ext Install] service worker installed', chrome.runtime.id);
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message?.type === 'install_extension') {
+    const repository = validRepository(message.repository);
+    if (!repository) {
+      sendResponse({ ok: false, error: 'invalid_repository' });
+      return false;
+    }
+
+    const browser = validBrowser(message.browser);
+    chrome.runtime.sendNativeMessage(
+      NATIVE_HOST,
+      { action: 'install', repository, browser },
+      (response) => {
+        const runtimeError = chrome.runtime.lastError;
+        if (runtimeError) {
+          sendResponse({ ok: false, error: runtimeError.message });
+          return;
+        }
+        sendResponse(response || { ok: false, error: 'empty_native_response' });
+      }
+    );
+    return true;
+  }
+
   if (message?.type !== 'browser_action') return;
 
   const action = message.action || {};
