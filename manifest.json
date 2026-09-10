@@ -1,13 +1,16 @@
 {
   "manifest_version": 3,
   "name": "Ext Install",
-  "version": "0.1.0",
-  "description": "Detect browser extension repositories on GitHub and open a safe install path.",
-  "permissions": ["storage"],
-  "host_permissions": ["https://github.com/*", "https://raw.githubusercontent.com/*"],
+  "version": "0.2.0",
+  "description": "URL-first browser action bridge for extension repositories and research workflows.",
+  "permissions": ["storage", "tabs"],
+  "host_permissions": ["https://github.com/*", "https://raw.githubusercontent.com/*", "http://127.0.0.1/*"],
   "action": {
     "default_popup": "popup.html",
     "default_title": "Ext Install"
+  },
+  "background": {
+    "service_worker": "service-worker.js"
   },
   "content_scripts": [
     {
