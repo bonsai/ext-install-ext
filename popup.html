@@ -8,23 +8,28 @@
     body { width: 360px; margin: 0; padding: 18px; font: 14px system-ui, sans-serif; }
     h1 { font-size: 18px; margin: 0 0 12px; }
     .card { padding: 12px; border: 1px solid #d0d7de; border-radius: 8px; }
-    .url { display: block; margin-top: 8px; overflow-wrap: anywhere; }
+    .label { font-size: 12px; font-weight: 600; color: #57606a; }
+    .repo { display: block; margin-top: 6px; overflow-wrap: anywhere; font-weight: 600; }
+    .command { display: block; margin-top: 8px; padding: 8px; background: #f6f8fa; border-radius: 6px; overflow-wrap: anywhere; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
     .muted { color: #57606a; }
     button, a { display: inline-block; margin-top: 10px; padding: 7px 12px; border-radius: 6px; }
     button { border: 1px solid #1f2328; background: #1f2328; color: white; cursor: pointer; }
-    button:disabled { opacity: .6; cursor: wait; }
+    button:disabled { opacity: .6; cursor: not-allowed; }
     a { border: 1px solid #d0d7de; text-decoration: none; color: inherit; }
     #status { margin-top: 12px; }
+    #status[data-state="error"] { color: #cf222e; }
   </style>
 </head>
 <body>
   <h1>Ext Install</h1>
   <div class="card">
-    <strong>Browser Action Target</strong>
-    <span id="repo" class="url">Detecting current tab…</span>
-    <p id="status" class="muted">URL → browser action. Research/installation logic can stay in the Skill.</p>
-    <button id="inspect" type="button">Open in browser</button>
-    <div><a id="open" href="#" target="_blank" rel="noopener noreferrer" hidden>Open target</a></div>
+    <div class="label">GitHub repository</div>
+    <span id="repo" class="repo">Detecting current tab…</span>
+    <div class="label" style="margin-top:12px">Skill CLI</div>
+    <code id="command" class="command"></code>
+    <p id="status" class="muted">Detecting repository…</p>
+    <button id="copy" type="button" disabled>Copy CLI command</button>
+    <div><a id="open" href="#" target="_blank" rel="noopener noreferrer" hidden>Open repository</a></div>
   </div>
   <script src="popup.js"></script>
 </body>
