@@ -3,35 +3,40 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Ext Install</title>
+  <title>Ext Install v0.4.0</title>
   <style>
-    body { width: 360px; margin: 0; padding: 18px; font: 14px system-ui, sans-serif; }
-    h1 { font-size: 18px; margin: 0 0 12px; }
-    .card { padding: 12px; border: 1px solid #d0d7de; border-radius: 8px; }
-    .label { font-size: 12px; font-weight: 600; color: #57606a; }
-    .repo { display: block; margin-top: 6px; overflow-wrap: anywhere; font-weight: 600; }
-    .command { display: block; margin-top: 8px; padding: 8px; background: #f6f8fa; border-radius: 6px; overflow-wrap: anywhere; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
-    .muted { color: #57606a; }
-    button, a { display: inline-block; margin-top: 10px; padding: 7px 12px; border-radius: 6px; }
-    button { border: 1px solid #1f2328; background: #1f2328; color: white; cursor: pointer; }
-    button:disabled { opacity: .6; cursor: not-allowed; }
-    a { border: 1px solid #d0d7de; text-decoration: none; color: inherit; }
-    #status { margin-top: 12px; }
-    #status[data-state="error"] { color: #cf222e; }
+    body { width: 340px; margin: 0; padding: 18px; font: 14px system-ui, sans-serif; }
+    header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+    h1 { font-size:18px; margin:0; }
+    .version { font-size:11px; color:#57606a; }
+    .card { padding:14px; border:1px solid #d0d7de; border-radius:10px; }
+    .label { font-size:12px; font-weight:600; color:#57606a; }
+    .repo { display:block; margin-top:6px; overflow-wrap:anywhere; font-weight:600; }
+    .muted { color:#57606a; }
+    button, a { box-sizing:border-box; width:100%; display:block; margin-top:10px; padding:9px 12px; border-radius:7px; text-align:center; }
+    button { border:1px solid #1f2328; background:#1f2328; color:white; cursor:pointer; }
+    button.secondary { background:white; color:#1f2328; border-color:#d0d7de; }
+    button:disabled { opacity:.6; cursor:not-allowed; }
+    a { border:1px solid #d0d7de; text-decoration:none; color:inherit; }
+    #status { margin:12px 0 0; line-height:1.4; }
+    #status[data-state="error"] { color:#cf222e; }
+    #status[data-state="success"] { color:#1a7f37; }
+    .hint { margin:10px 0 0; font-size:11px; color:#57606a; }
   </style>
 </head>
 <body>
-  <h1>Ext Install</h1>
+  <header>
+    <h1>Ext Install</h1>
+    <span class="version">v0.4.0</span>
+  </header>
   <div class="card">
     <div class="label">GitHub repository</div>
     <span id="repo" class="repo">Detecting…</span>
-    <div class="label" style="margin-top:12px">Skill CLI</div>
-    <code id="command" class="command"></code>
     <p id="status" class="muted">Detecting the active GitHub repository.</p>
     <button id="install" type="button" disabled>Install / Update</button>
-    <button id="detect" type="button">Detect</button>
-    <button id="copy" type="button" disabled>Copy CLI command</button>
+    <button id="detect" class="secondary" type="button">Refresh</button>
     <div><a id="open" href="#" target="_blank" rel="noopener noreferrer" hidden>Open repository</a></div>
+    <p class="hint">Installation runs through the registered native host. No CLI command is required.</p>
   </div>
   <script src="popup.js"></script>
 </body>
