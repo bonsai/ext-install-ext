@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "Ext Install",
+  "version": "0.1.0",
+  "description": "Detect browser extension repositories on GitHub and open a safe install path.",
+  "permissions": ["storage"],
+  "host_permissions": ["https://github.com/*", "https://raw.githubusercontent.com/*"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Ext Install"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://github.com/*/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
