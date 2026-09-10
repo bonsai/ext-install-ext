@@ -1,9 +1,10 @@
 const params = new URLSearchParams(location.search);
-const repo = params.get('repo');
+const repoParam = params.get('repo');
 
 const repoEl = document.getElementById('repo');
 const commandEl = document.getElementById('command');
 const statusEl = document.getElementById('status');
+const detect = document.getElementById('detect');
 const copy = document.getElementById('copy');
 const open = document.getElementById('open');
 
@@ -26,7 +27,7 @@ function setTarget(repository) {
     commandEl.textContent = '';
     open.hidden = true;
     copy.disabled = true;
-    setStatus('Open a GitHub repository page first.', true);
+    setStatus('Active tab is not a GitHub repository.', true);
     return null;
   }
 
@@ -36,31 +37,42 @@ function setTarget(repository) {
   open.href = `https://github.com/${repository}`;
   open.hidden = false;
   copy.disabled = false;
-  setStatus('Ready. Run the Skill CLI to clone, inspect, and load the extension.');
-  return command;
+  setStatus('Repository detected.');
+  return repository;
 }
 
 async function currentTab() {
   const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-  const tab = tabs[0];
-  if (!tab) throw new Error('No active tab found');
-  return tab;
+  if (!tabs[0]) throw new Error('No active tab found');
+  return tabs[0];
 }
 
 async function detectRepository() {
   const tab = await currentTab();
-  const target = repo || tab.url || '';
-  const match = target.match(/github\.com\/([^/]+\/[^/#?]+)/i);
-  return normalizeRepository(match ? match[1] : target);
+  const source = repoParam || tab.url || '';
+  const match = source.match(/^https?:\/\/github\.com\/([^/#?]+\/[^/#?]+)/i);
+  return normalizeRepository(match ? match[1] : source);
+}
+
+async function detectTarget() {
+  detect.disabled = true;
+  try {
+    setStatus('Detecting active GitHub repository…');
+    const repository = await detectRepository();
+    setTarget(repository);
+  } catch (error) {
+    console.error('[Ext Install] detect failed', error);
+    setStatus(`Detect failed: ${error?.message || error}`, true);
+  } finally {
+    detect.disabled = false;
+  }
 }
 
 async function copyCommand() {
   const repository = normalizeRepository(repoEl.textContent);
   if (!repository) return;
-
-  const command = `ext-install ${repository} edge`;
   try {
-    await navigator.clipboard.writeText(command);
+    await navigator.clipboard.writeText(`ext-install ${repository} edge`);
     setStatus('CLI command copied. Run it in PowerShell or WSL.');
   } catch (error) {
     console.error('[Ext Install] copy failed', error);
@@ -68,18 +80,5 @@ async function copyCommand() {
   }
 }
 
-(async () => {
-  try {
-    const repository = await detectRepository();
-    setTarget(repository);
-    console.log('[Ext Install] popup ready', {
-      extensionId: chrome.runtime.id,
-      repository
-    });
-  } catch (error) {
-    console.error('[Ext Install] popup init failed', error);
-    setStatus(`Popup init failed: ${error?.message || error}`, true);
-  }
-})();
-
+detect.addEventListener('click', detectTarget);
 copy.addEventListener('click', copyCommand);
