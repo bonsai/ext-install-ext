@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Ext Install</title>
+  <style>
+    body { width: 340px; margin: 0; padding: 18px; font: 14px system-ui, sans-serif; }
+    h1 { font-size: 18px; margin: 0 0 12px; }
+    .card { padding: 12px; border: 1px solid #d0d7de; border-radius: 8px; }
+    .muted { color: #57606a; }
+    button, a { display: inline-block; margin-top: 10px; padding: 7px 12px; border-radius: 6px; }
+    button { border: 1px solid #1f2328; background: #1f2328; color: white; cursor: pointer; }
+    a { border: 1px solid #d0d7de; text-decoration: none; color: inherit; }
+    #status { margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <h1>Ext Install</h1>
+  <div class="card">
+    <strong id="repo">GitHub extension repository</strong>
+    <p id="status" class="muted">Enter a GitHub extension repository.</p>
+    <button id="inspect" type="button">Detect extension</button>
+    <div><a id="open" href="#" target="_blank" rel="noopener noreferrer" hidden>Open repository</a></div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
