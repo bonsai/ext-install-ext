@@ -2,19 +2,16 @@ const params = new URLSearchParams(location.search);
 const repo = params.get('repo');
 
 const repoEl = document.getElementById('repo');
+const commandEl = document.getElementById('command');
 const statusEl = document.getElementById('status');
-const inspect = document.getElementById('inspect');
+const copy = document.getElementById('copy');
 const open = document.getElementById('open');
 
-function normalizeUrl(value) {
+function normalizeRepository(value) {
   if (!value) return null;
-  try {
-    const url = new URL(value);
-    if (!['http:', 'https:'].includes(url.protocol)) return null;
-    return url.href;
-  } catch {
-    return null;
-  }
+  const raw = value.trim().replace(/\.git\/?$/, '').replace(/\/$/, '');
+  const match = raw.match(/^(?:https?:\/\/github\.com\/)?([^/\s]+)\/([^/\s]+)$/i);
+  return match ? `${match[1]}/${match[2]}` : null;
 }
 
 function setStatus(message, error = false) {
@@ -23,65 +20,61 @@ function setStatus(message, error = false) {
   console.log(`[Ext Install] ${message}`);
 }
 
-function setTarget(url) {
-  const normalized = normalizeUrl(url);
-  if (!normalized) {
-    repoEl.textContent = 'No HTTP(S) target';
-    setStatus('No supported HTTP(S) URL found.', true);
+function setTarget(repository) {
+  if (!repository) {
+    repoEl.textContent = 'No GitHub repository detected';
+    commandEl.textContent = '';
     open.hidden = true;
+    copy.disabled = true;
+    setStatus('Open a GitHub repository page first.', true);
     return null;
   }
-  repoEl.textContent = normalized;
-  setStatus('URL is ready for browser action.');
-  open.href = normalized;
+
+  const command = `ext-install ${repository} edge`;
+  repoEl.textContent = repository;
+  commandEl.textContent = command;
+  open.href = `https://github.com/${repository}`;
   open.hidden = false;
-  return normalized;
+  copy.disabled = false;
+  setStatus('Ready. Run the Skill CLI to clone, inspect, and load the extension.');
+  return command;
 }
 
 async function currentTab() {
   const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
   const tab = tabs[0];
   if (!tab) throw new Error('No active tab found');
-  console.log('[Ext Install] active tab', tab);
   return tab;
 }
 
-async function inspectTarget() {
-  inspect.disabled = true;
+async function detectRepository() {
+  const tab = await currentTab();
+  const target = repo || tab.url || '';
+  const match = target.match(/github\.com\/([^/]+\/[^/#?]+)/i);
+  return normalizeRepository(match ? match[1] : target);
+}
+
+async function copyCommand() {
+  const repository = normalizeRepository(repoEl.textContent);
+  if (!repository) return;
+
+  const command = `ext-install ${repository} edge`;
   try {
-    const tab = await currentTab();
-    const target = repo ? `https://github.com/${repo}` : tab.url;
-    const url = setTarget(target);
-    if (!url) return;
-
-    setStatus('Sending browser_action → service worker…');
-    const response = await chrome.runtime.sendMessage({
-      type: 'browser_action',
-      action: { type: 'open_url', url }
-    });
-
-    console.log('[Ext Install] service worker response', response);
-    if (!response?.ok) {
-      throw new Error(response?.error || 'No successful response from service worker');
-    }
-    setStatus(`Opened tab ${response.tab_id}: ${response.url}`);
+    await navigator.clipboard.writeText(command);
+    setStatus('CLI command copied. Run it in PowerShell or WSL.');
   } catch (error) {
-    console.error('[Ext Install] browser action failed', error);
-    setStatus(`Browser action failed: ${error?.message || error}`, true);
-  } finally {
-    inspect.disabled = false;
+    console.error('[Ext Install] copy failed', error);
+    setStatus(`Copy failed: ${error?.message || error}`, true);
   }
 }
 
 (async () => {
   try {
-    const tab = await currentTab();
-    setTarget(repo ? `https://github.com/${repo}` : tab.url);
+    const repository = await detectRepository();
+    setTarget(repository);
     console.log('[Ext Install] popup ready', {
       extensionId: chrome.runtime.id,
-      repo,
-      tabId: tab.id,
-      tabUrl: tab.url
+      repository
     });
   } catch (error) {
     console.error('[Ext Install] popup init failed', error);
@@ -89,4 +82,4 @@ async function inspectTarget() {
   }
 })();
 
-inspect.addEventListener('click', inspectTarget);
+copy.addEventListener('click', copyCommand);
