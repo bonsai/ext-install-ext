@@ -2,11 +2,9 @@ const params = new URLSearchParams(location.search);
 const repoParam = params.get('repo');
 
 const repoEl = document.getElementById('repo');
-const commandEl = document.getElementById('command');
 const statusEl = document.getElementById('status');
 const detect = document.getElementById('detect');
 const install = document.getElementById('install');
-const copy = document.getElementById('copy');
 const open = document.getElementById('open');
 
 function normalizeRepository(value) {
@@ -16,31 +14,26 @@ function normalizeRepository(value) {
   return match ? `${match[1]}/${match[2]}` : null;
 }
 
-function setStatus(message, error = false) {
+function setStatus(message, state = 'ok') {
   statusEl.textContent = message;
-  statusEl.dataset.state = error ? 'error' : 'ok';
+  statusEl.dataset.state = state;
   console.log(`[Ext Install] ${message}`);
 }
 
 function setTarget(repository) {
   if (!repository) {
     repoEl.textContent = 'No GitHub repository detected';
-    commandEl.textContent = '';
     open.hidden = true;
     install.disabled = true;
-    copy.disabled = true;
-    setStatus('Active tab is not a GitHub repository.', true);
+    setStatus('Open a GitHub repository and try again.', 'error');
     return null;
   }
 
-  const command = `ext-install ${repository} edge`;
   repoEl.textContent = repository;
-  commandEl.textContent = command;
   open.href = `https://github.com/${repository}`;
   open.hidden = false;
   install.disabled = false;
-  copy.disabled = false;
-  setStatus('Repository detected. Ready to install or update.');
+  setStatus('Ready — install or update from the GUI.');
   return repository;
 }
 
@@ -61,11 +54,10 @@ async function detectTarget() {
   detect.disabled = true;
   try {
     setStatus('Detecting active GitHub repository…');
-    const repository = await detectRepository();
-    setTarget(repository);
+    setTarget(await detectRepository());
   } catch (error) {
     console.error('[Ext Install] detect failed', error);
-    setStatus(`Detect failed: ${error?.message || error}`, true);
+    setStatus(`Detect failed: ${error?.message || error}`, 'error');
   } finally {
     detect.disabled = false;
   }
@@ -77,7 +69,6 @@ async function installTarget() {
 
   install.disabled = true;
   detect.disabled = true;
-  copy.disabled = true;
   setStatus(`Installing / updating ${repository}…`);
 
   try {
@@ -88,34 +79,25 @@ async function installTarget() {
     });
 
     if (!response?.ok) {
-      throw new Error(response?.error || 'Native install failed');
+      throw new Error(response?.error || 'Native host install failed');
     }
 
-    setStatus(response.message || `Installed / updated ${repository}.`);
+    setStatus(response.message || `Installed / updated ${repository}.`, 'success');
   } catch (error) {
     console.error('[Ext Install] install failed', error);
-    setStatus(`Install failed: ${error?.message || error}`, true);
+    const message = error?.message || String(error);
+    setStatus(
+      message.includes('Receiving end does not exist') || message.includes('Native host')
+        ? 'Native host is not available. Run the one-time host setup, then reload this extension.'
+        : `Install failed: ${message}`,
+      'error'
+    );
   } finally {
     install.disabled = false;
     detect.disabled = false;
-    copy.disabled = false;
-  }
-}
-
-async function copyCommand() {
-  const repository = normalizeRepository(repoEl.textContent);
-  if (!repository) return;
-  try {
-    await navigator.clipboard.writeText(`ext-install ${repository} edge`);
-    setStatus('CLI command copied.');
-  } catch (error) {
-    console.error('[Ext Install] copy failed', error);
-    setStatus(`Copy failed: ${error?.message || error}`, true);
   }
 }
 
 detect.addEventListener('click', detectTarget);
 install.addEventListener('click', installTarget);
-copy.addEventListener('click', copyCommand);
-
 detectTarget();
