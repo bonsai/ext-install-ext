@@ -1,10 +1,11 @@
 {
   "manifest_version": 3,
   "name": "Ext Install",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "URL-first browser action bridge for extension repositories and research workflows.",
-  "permissions": ["storage", "tabs"],
+  "permissions": ["storage", "tabs", "nativeMessaging"],
   "host_permissions": ["https://github.com/*", "https://raw.githubusercontent.com/*", "http://127.0.0.1/*"],
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA3HD+cm5iwnR/Dlr8vgY2Htcza9RWOhwePFqm/lCpStTX1vY4+DYCaAr4XRsNVGJ5DUk3Si8sidB06TuIHRwsQVB4OQu5Q15WUGEVhkfm7KcQPRfFye53fmguE//YhF/L2zt1kOgjcA1Bo4q0aIgwDNvnrqVnuYW+Nji0W0bMYHoO5R6WMS+iFOAw4ZJpOey+HO90LMQcxnrRber30wQdjm0Mg0evRwqbprbMRVS6UGAahd/xQ3YZuoooR9hFvEPK4bxuQ4haQTczSyIqtXqcm8UkoTlyz3w6EvByoDIUgJXFDGxG67UUXBpE1mBZXPOQI7UEQeNmLUumbxFg++OReQIDAQAB",
   "action": {
     "default_popup": "popup.html",
     "default_title": "Ext Install"
