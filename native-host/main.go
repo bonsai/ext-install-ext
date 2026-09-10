@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
-	"strings"
 )
 
 type Request struct {
@@ -79,12 +78,10 @@ func install(req Request) map[string]any {
 }
 
 func main() {
-	_ = os.Setenv("PYTHONIOENCODING", "utf-8")
 	reader := bufio.NewReader(os.Stdin)
 	data, err := receive(reader)
 	if err != nil { _ = send(map[string]any{"ok": false, "error": err.Error()}); return }
 	var req Request
 	if err := json.Unmarshal(data, &req); err != nil { _ = send(map[string]any{"ok": false, "error": "invalid_json"}); return }
 	_ = send(install(req))
-	_ = strings.Builder{}
 }
