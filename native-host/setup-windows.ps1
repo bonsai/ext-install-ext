@@ -3,19 +3,27 @@ $ErrorActionPreference = 'Stop'
 $Root = Split-Path -Parent $PSScriptRoot
 $HostName = 'com.bonsai.ext_install'
 $ExtensionId = '06647b6f49cbcc96de88f26ab75221b3'
+$Project = Join-Path $PSScriptRoot 'ExtInstallNativeHost.csproj'
 $Exe = Join-Path $PSScriptRoot 'ext-install-native-host.exe'
 $Manifest = Join-Path $PSScriptRoot "$HostName.json"
 
-if (-not (Get-Command go -ErrorAction SilentlyContinue)) {
-  throw 'Go is required to build the native messaging host. Install Go, then run this script again.'
+if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
+  throw 'dotnet is required to build the native messaging host. Install the .NET 8 SDK, then run this script again.'
 }
 
 Push-Location $PSScriptRoot
 try {
-  go build -o $Exe .
+  dotnet publish $Project -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o (Join-Path $PSScriptRoot 'publish')
 } finally {
   Pop-Location
 }
+
+$PublishedExe = Join-Path $PSScriptRoot 'publish\ext-install-native-host.exe'
+if (-not (Test-Path $PublishedExe)) {
+  throw "Native host build failed: $PublishedExe was not created."
+}
+
+Copy-Item -Force $PublishedExe $Exe
 
 $manifestObject = [ordered]@{
   name = $HostName
@@ -37,4 +45,5 @@ foreach ($key in $registrations) {
 }
 
 Write-Host "Native host ready: $HostName"
+Write-Host "Executable: $Exe"
 Write-Host "Extension ID: $ExtensionId"
