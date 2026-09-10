@@ -9,10 +9,16 @@ function validHttpUrl(value) {
   }
 }
 
+chrome.runtime.onInstalled.addListener(() => {
+  console.log('[Ext Install] service worker installed', chrome.runtime.id);
+});
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type !== 'browser_action') return;
 
   const action = message.action || {};
+  console.log('[Ext Install] browser_action received', action, 'from', sender?.tab?.id);
+
   if (!ACTIONS.has(action.type)) {
     sendResponse({ ok: false, error: 'unsupported_action' });
     return;
@@ -41,8 +47,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     await chrome.tabs.update(tabId, { active: true });
     return { ok: true, action: action.type, tab_id: tabId };
   })()
-    .then(sendResponse)
-    .catch((error) => sendResponse({ ok: false, error: error.message }));
+    .then((result) => {
+      console.log('[Ext Install] browser_action result', result);
+      sendResponse(result);
+    })
+    .catch((error) => {
+      console.error('[Ext Install] browser_action error', error);
+      sendResponse({ ok: false, error: error?.message || String(error) });
+    });
 
   return true;
 });
