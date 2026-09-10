@@ -34,13 +34,14 @@ $manifestObject = [ordered]@{
 }
 $manifestObject | ConvertTo-Json -Depth 4 | Set-Content -Encoding UTF8 $Manifest
 
-$registrations = @(
-  'HKCU:\Software\Microsoft\Edge\NativeMessagingHosts\' + $HostName,
-  'HKCU:\Software\Google\Chrome\NativeMessagingHosts\' + $HostName
-)
+# Register each browser independently.
+$registrations = @()
+$registrations += "HKCU:\Software\Microsoft\Edge\NativeMessagingHosts\$HostName"
+$registrations += "HKCU:\Software\Google\Chrome\NativeMessagingHosts\$HostName"
+
 foreach ($key in $registrations) {
   New-Item -Path $key -Force | Out-Null
-  Set-ItemProperty -Path $key -Name '(default)' -Value $Manifest
+  New-ItemProperty -Path $key -Name '(default)' -PropertyType String -Value $Manifest -Force | Out-Null
   Write-Host "registered: $key -> $Manifest"
 }
 
