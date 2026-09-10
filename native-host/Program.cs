@@ -1,8 +1,5 @@
 using System.Diagnostics;
-using System.Text;
 using System.Text.Json;
-
-const string HostName = "com.bonsai.ext_install";
 
 try
 {
@@ -64,6 +61,7 @@ static async Task<object> InstallAsync(JsonElement request)
     if (!string.IsNullOrWhiteSpace(configured)) candidates.Add(configured);
     candidates.Add(Path.Combine(home, "ext-install-skill", "ext-install.ps1"));
     candidates.Add(Path.Combine(home, ".local", "share", "ext-install-skill", "ext-install.ps1"));
+    candidates.Add(Path.Combine(AppContext.BaseDirectory, "ext-install.ps1"));
 
     var script = candidates.FirstOrDefault(File.Exists);
     if (script is null) return new { ok = false, error = "ext-install.ps1 not found" };
