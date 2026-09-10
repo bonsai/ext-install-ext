@@ -17,46 +17,76 @@ function normalizeUrl(value) {
   }
 }
 
+function setStatus(message, error = false) {
+  statusEl.textContent = message;
+  statusEl.dataset.state = error ? 'error' : 'ok';
+  console.log(`[Ext Install] ${message}`);
+}
+
 function setTarget(url) {
   const normalized = normalizeUrl(url);
   if (!normalized) {
-    statusEl.textContent = 'No supported HTTP(S) URL found.';
+    repoEl.textContent = 'No HTTP(S) target';
+    setStatus('No supported HTTP(S) URL found.', true);
     open.hidden = true;
     return null;
   }
   repoEl.textContent = normalized;
-  statusEl.textContent = 'URL is ready for browser action.';
+  setStatus('URL is ready for browser action.');
   open.href = normalized;
   open.hidden = false;
   return normalized;
 }
 
-async function currentTabUrl() {
+async function currentTab() {
   const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-  return tabs[0]?.url || null;
+  const tab = tabs[0];
+  if (!tab) throw new Error('No active tab found');
+  console.log('[Ext Install] active tab', tab);
+  return tab;
 }
 
 async function inspectTarget() {
   inspect.disabled = true;
   try {
-    const target = repo ? `https://github.com/${repo}` : await currentTabUrl();
+    const tab = await currentTab();
+    const target = repo ? `https://github.com/${repo}` : tab.url;
     const url = setTarget(target);
     if (!url) return;
 
-    await chrome.runtime.sendMessage({
+    setStatus('Sending browser_action → service worker…');
+    const response = await chrome.runtime.sendMessage({
       type: 'browser_action',
       action: { type: 'open_url', url }
     });
-    statusEl.textContent = 'Sent to browser action: open_url.';
+
+    console.log('[Ext Install] service worker response', response);
+    if (!response?.ok) {
+      throw new Error(response?.error || 'No successful response from service worker');
+    }
+    setStatus(`Opened tab ${response.tab_id}: ${response.url}`);
   } catch (error) {
-    statusEl.textContent = `Browser action failed: ${error.message}`;
+    console.error('[Ext Install] browser action failed', error);
+    setStatus(`Browser action failed: ${error?.message || error}`, true);
   } finally {
     inspect.disabled = false;
   }
 }
 
 (async () => {
-  setTarget(repo ? `https://github.com/${repo}` : await currentTabUrl());
+  try {
+    const tab = await currentTab();
+    setTarget(repo ? `https://github.com/${repo}` : tab.url);
+    console.log('[Ext Install] popup ready', {
+      extensionId: chrome.runtime.id,
+      repo,
+      tabId: tab.id,
+      tabUrl: tab.url
+    });
+  } catch (error) {
+    console.error('[Ext Install] popup init failed', error);
+    setStatus(`Popup init failed: ${error?.message || error}`, true);
+  }
 })();
 
 inspect.addEventListener('click', inspectTarget);
